@@ -1,9 +1,11 @@
+on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   release-on-push:
+    permissions: write-all
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
