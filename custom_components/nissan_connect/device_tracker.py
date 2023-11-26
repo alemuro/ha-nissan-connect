@@ -87,6 +87,14 @@ class NissanConnectTracker(TrackerEntity, NissanConnectEntity):
         return SOURCE_TYPE_GPS
 
     @property
+    def location_accuracy(self) -> int:
+        """Return the location accuracy of the device.
+
+        Value in meters.
+        """
+        return 0
+
+    @property
     def should_poll(self):
         """No polling needed."""
         return True

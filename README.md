@@ -9,6 +9,11 @@
 This integration integrates Nissan vehicles to Home Assistant using Nissan Connect
 services.
 
+This project is based on the following projects:
+
+- https://github.com/sebjsmith/kamereon
+- https://github.com/mitchellrj/kamereon-python
+
 The author of this project categorically rejects any and all responsibility related to vacuums managed by this integration.
 
 ## HACS Installation
