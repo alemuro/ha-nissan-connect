@@ -1,0 +1,18 @@
+{
+  "config": {
+      "flow_title": "Inicia sesión",
+      "step": {
+          "login": {
+              "title": "Inicia sesión",
+              "description": "Por favor, introduce tus credenciales de Nissan Connect.",
+              "data": {
+                  "username": "Usuario",
+                  "password": "Contraseña"
+              }
+          }
+      },
+      "error": {
+          "auth_error": "Credenciales inválidas. Prueba de nuevo."
+      }
+  }
+}

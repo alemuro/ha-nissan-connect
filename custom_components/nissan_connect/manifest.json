@@ -1,0 +1,13 @@
+{
+  "version": "0.1.0",
+  "domain": "nissan_connect",
+  "name": "Nissan Connect",
+  "documentation": "https://github.com/alemuro/ha-nissan-connect",
+  "issue_tracker": "https://github.com/alemuro/ha-nissan-connect",
+  "iot_class": "cloud_polling",
+  "requirements": [],
+  "codeowners": [
+      "@alemuro"
+  ],
+  "config_flow": true
+}
