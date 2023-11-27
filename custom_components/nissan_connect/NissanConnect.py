@@ -14,7 +14,7 @@ class NissanConnectClient:
     self._user_id = None
     self._username = username
     self._passwword = password
-    self._bearer_token = "ueGf2K1FfEwblf_JwC43bsrpp-8" #None
+    self._bearer_token = None
     self._settings = {
       "EU": {
         "client_id": "a-ncb-prod-android",
