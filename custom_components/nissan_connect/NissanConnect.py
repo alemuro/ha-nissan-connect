@@ -13,7 +13,7 @@ class NissanConnectClient:
   def __init__(self, username, password):
     self._user_id = None
     self._username = username
-    self._passwword = password
+    self._password = password
     self._bearer_token = None
     self._settings = {
       "EU": {
