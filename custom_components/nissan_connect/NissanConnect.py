@@ -14,7 +14,7 @@ class NissanConnectClient:
     self._user_id = None
     self._username = username
     self._password = password
-    self._bearer_token = None
+    self._bearer_token = "ueGf2K1FfEwblf_JwC43bsrpp-8" #None
     self._settings = {
       "EU": {
         "client_id": "a-ncb-prod-android",
@@ -42,6 +42,13 @@ class NissanConnectClient:
         "Authorization": f"Bearer {self._bearer_token}"
       }
     )
+
+    # if response is 401, try to refresh token and try again
+    if req.status_code == 401:
+      self._bearer_token = None
+      self._refresh_api_token()
+      return self.get_vehicles()
+
     req.raise_for_status()
     _LOGGER.debug(req.json())
     return req.json()
@@ -56,7 +63,15 @@ class NissanConnectClient:
         "Authorization": f"Bearer {self._bearer_token}"
       }
     )
+
+    # if response is 401, try to refresh token and try again
+    if req.status_code == 401:
+      self._bearer_token = None
+      self._refresh_api_token()
+      return self.get_location(vin)
+
     req.raise_for_status()
+
     _LOGGER.debug(req.json())
     return req.json()
 
@@ -70,6 +85,13 @@ class NissanConnectClient:
         "Authorization": f"Bearer {self._bearer_token}"
       }
     )
+
+    # if response is 401, try to refresh token and try again
+    if req.status_code == 401:
+      self._bearer_token = None
+      self._refresh_api_token()
+      return self.get_cockpit(vin)
+
     req.raise_for_status()
     _LOGGER.debug(req.json())
     return req.json()
