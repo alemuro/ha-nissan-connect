@@ -5,7 +5,11 @@ from homeassistant.core import HomeAssistant
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.const import (
-  UnitOfLength
+  UnitOfLength,
+  UnitOfTime,
+  UnitOfVolume,
+  UnitOfMass,
+  CONF_COUNT,
 )
 from .const import (
     BRAND,
@@ -31,6 +35,36 @@ sensors = [
         "name": "Fuel Autonomy",
         "icon": "mdi:gas-station",
         "unit": UnitOfLength.KILOMETERS,
+    },
+    {
+        "id": "tripsNumberToday",
+        "name": "Trips Today",
+        "icon": "mdi:counter",
+        "unit": CONF_COUNT,
+    },
+    {
+        "id": "tripsDistanceToday",
+        "name": "Distance Today",
+        "icon": "mdi:counter",
+        "unit": UnitOfLength.KILOMETERS,
+    },
+    {
+        "id": "tripsDurationToday",
+        "name": "Trips Duration Today",
+        "icon": "mdi:car-clock",
+        "unit": UnitOfTime.MINUTES,
+    },
+    {
+        "id": "tripsConsumedFuel",
+        "name": "Consumed Fuel Today",
+        "icon": "mdi:gas-station",
+        "unit": UnitOfVolume.LITERS,
+    },
+    {
+        "id": "tripsCo2Saving",
+        "name": "CO2 Saved",
+        "icon": "mdi:molecule-co2",
+        "unit": UnitOfMass.GRAMS,
     },
 ]
 
@@ -64,7 +98,7 @@ class NissanConnectSensor(SensorEntity, NissanConnectEntity):
         self._ncc = nissan_connect_data["controller"]
         self._model = model
         self._unit_of_measurement = sensor['unit']
-        self._name = f"{self._model} {sensor['name']}"
+        self._name = f"Nissan {self._model} {sensor['name']}"
         self._icon = sensor['icon']
         self._sn = sn
         self._state = None
@@ -99,9 +133,6 @@ class NissanConnectSensor(SensorEntity, NissanConnectEntity):
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def update(self):
         """Get the status."""
-        try:
-            cockpit_status = self._ncc.get_cockpit(self._sn)
-            self._state = cockpit_status["data"]["attributes"][self._attribute_id]
-
-        except HTTPError:
-            _LOGGER.error("Unable to fetch data from API")
+        self._ncc.refresh_data()
+        stats = self._ncc.get_stats(self._sn)
+        self._state = stats[self._attribute_id]

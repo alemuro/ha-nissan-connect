@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from custom_components.nissan_connect.NissanConnect import NissanConnectClient
+from custom_components.nissan_connect.NissanConnect import NissanConnectClient, Period
 
 def main():
   username = os.getenv('NISSAN_USERNAME')
@@ -9,10 +9,12 @@ def main():
 
   nc = NissanConnectClient(username, password)
   # nc.login(username, password)
-  print(nc.get_vehicles())
+  # print(nc.get_vehicles())
   # nc.get_location("vin")
   # nc.get_statistic_monthly("vin")
   # nc.get_cockpit("vin")
+  nc.refresh_data()
+  print(nc.get_trip_history(vin))
 
 if __name__ == "__main__":
   load_dotenv()

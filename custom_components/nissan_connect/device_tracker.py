@@ -102,10 +102,7 @@ class NissanConnectTracker(TrackerEntity, NissanConnectEntity):
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def update(self):
         """Get the status."""
-        try:
-            location = self._ncc.get_location(self._sn)
-            self._latitude = location["data"]["attributes"]["gpsLatitude"]
-            self._longitude = location["data"]["attributes"]["gpsLongitude"]
-
-        except HTTPError:
-            _LOGGER.error("Unable to fetch data from API")
+        self._ncc.refresh_data()
+        location = self._ncc.get_location(self._sn)
+        self._latitude = location["attributes"]["gpsLatitude"]
+        self._longitude = location["attributes"]["gpsLongitude"]

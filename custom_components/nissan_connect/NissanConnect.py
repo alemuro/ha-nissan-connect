@@ -9,6 +9,11 @@ _LOGGER = logging.getLogger(__name__)
 API_VERSION = "protocol=1.0,resource=2.1"
 SRP_KEY = "D5AF0E14718E662D12DBB4FE42304DF5A8E48359E22261138B40AA16CC85C76A11B43200A1EECB3C9546A262D1FBD51ACE6FCDE558C00665BBF93FF86B9F8F76AA7A53CA74F5B4DFF9A4B847295E7D82450A2078B5A28814A7A07F8BBDD34F8EEB42B0E70499087A242AA2C5BA9513C8F9D35A81B33A121EEF0A71F3F9071CCD"
 
+class Period(enum.Enum):
+    DAILY = 0
+    MONTHLY = 1
+    YEARLY = 2
+
 class NissanConnectClient:
   def __init__(self, username, password):
     self._user_id = None
@@ -28,73 +33,81 @@ class NissanConnectClient:
         "user_base_url": "https://nci-bff-web-prod.apps.eu2.kamereon.io/bff-web/"
       }
     }
-    pass
+    self._response_vehicles = None
+    self._response_location = {}
+    self._response_cockpit = {}
+    self._response_trips = {}
 
-  def get_vehicles(self):
+  def refresh_data(self):
     self._refresh_api_token()
-
     user_id = self._get_user_id()
 
-    url = f"{self._settings['EU']['user_base_url']}v5/users/{user_id}/cars"
-    req = requests.get(
-      url,
+    # Get cars
+    url_cars = f"{self._settings['EU']['user_base_url']}v5/users/{user_id}/cars"
+    response_vehicles = requests.get(
+      url_cars,
       headers={
         "Authorization": f"Bearer {self._bearer_token}"
       }
     )
 
-    # if response is 401, try to refresh token and try again
-    if req.status_code == 401:
+    if response_vehicles.status_code == 401:
       self._bearer_token = None
-      self._refresh_api_token()
-      return self.get_vehicles()
+      return
 
-    req.raise_for_status()
-    _LOGGER.debug(req.json())
-    return req.json()
+    self._response_vehicles = response_vehicles.json()["data"]
+
+
+    for vehicle in self._response_vehicles:
+      vin = vehicle["vin"]
+
+      url_location = f"{self._settings['EU']['car_adapter_base_url']}v1/cars/{vin}/location"
+      url_cockpit = f"{self._settings['EU']['car_adapter_base_url']}v1/cars/{vin}/cockpit"
+      url_trips = f"{self._settings['EU']['car_adapter_base_url']}v1/cars/{vin}/trip-history?type=0&start={datetime.date.today()}&end={datetime.date.today()}"
+
+      response_location = requests.get(
+        url_location,
+        headers={
+          "Authorization": f"Bearer {self._bearer_token}"
+        }
+      )
+      self._response_location[vin] = response_location.json()["data"]
+
+      response_cockpit = requests.get(
+        url_cockpit,
+        headers={
+          "Authorization": f"Bearer {self._bearer_token}"
+        }
+      )
+      self._response_cockpit[vin] = response_cockpit.json()["data"]
+
+      response_trips = requests.get(
+        url_trips,
+        headers={
+          "Authorization": f"Bearer {self._bearer_token}"
+        }
+      )
+      self._response_trips[vin] = response_trips.json()["data"]
+
+  def get_vehicles(self):
+    return self._response_vehicles
 
   def get_location(self, vin):
-    self._refresh_api_token()
-
-    url = f"{self._settings['EU']['car_adapter_base_url']}v1/cars/{vin}/location"
-    req = requests.get(
-      url,
-      headers={
-        "Authorization": f"Bearer {self._bearer_token}"
-      }
-    )
-
-    # if response is 401, try to refresh token and try again
-    if req.status_code == 401:
-      self._bearer_token = None
-      self._refresh_api_token()
-      return self.get_location(vin)
-
-    req.raise_for_status()
-
-    _LOGGER.debug(req.json())
-    return req.json()
-
-  def get_cockpit(self, vin):
-    self._refresh_api_token()
-
-    url = f"{self._settings['EU']['car_adapter_base_url']}v1/cars/{vin}/cockpit"
-    req = requests.get(
-      url,
-      headers={
-        "Authorization": f"Bearer {self._bearer_token}"
-      }
-    )
-
-    # if response is 401, try to refresh token and try again
-    if req.status_code == 401:
-      self._bearer_token = None
-      self._refresh_api_token()
-      return self.get_cockpit(vin)
-
-    req.raise_for_status()
-    _LOGGER.debug(req.json())
-    return req.json()
+    return self._response_location[vin]
+  
+  def get_stats(self, vin):
+    cockpit = self._response_cockpit[vin]["attributes"]
+    trips = self._response_trips[vin]["attributes"]["summaries"][0]
+  
+    return {
+      "totalMileage": cockpit["totalMileage"],
+      "fuelAutonomy": cockpit["fuelAutonomy"],
+      "tripsNumberToday": trips["tripsNumber"], 
+      "tripsDistanceToday": trips["distance"],
+      "tripsDurationToday": trips["duration"],
+      "tripsConsumedFuel": trips["consumedFuel"],
+      "tripsCo2Saving": trips["co2Saving"],
+    }
 
   def _get_user_id(self):
     if self._user_id:
@@ -109,7 +122,6 @@ class NissanConnectClient:
     )
     req.raise_for_status()
     return req.json()["userId"]
-
 
   def _getAccessToken(self, realm, authorisationCode):
     expectedAccessTokenResponseUrl = f"{self._settings['EU']['auth_base_url']}oauth2{realm}/access_token?code={authorisationCode}&client_id={self._settings['EU']['client_id']}&client_secret={self._settings['EU']['client_secret']}&redirect_uri={self._settings['EU']['redirect_uri']}&grant_type=authorization_code"
