@@ -97,16 +97,16 @@ class NissanConnectClient:
   
   def get_stats(self, vin):
     cockpit = self._response_cockpit[vin]["attributes"]
-    trips = self._response_trips[vin]["attributes"]["summaries"][0]
+    trips = self._response_trips[vin]["attributes"]["summaries"][0] if len(self._response_trips[vin]["attributes"]["summaries"]) else {}
   
     return {
       "totalMileage": cockpit["totalMileage"],
       "fuelAutonomy": cockpit["fuelAutonomy"],
-      "tripsNumberToday": trips["tripsNumber"], 
-      "tripsDistanceToday": trips["distance"],
-      "tripsDurationToday": trips["duration"],
-      "tripsConsumedFuel": trips["consumedFuel"],
-      "tripsCo2Saving": trips["co2Saving"],
+      "tripsNumberToday": trips["tripsNumber"] if "tripsNumber" in trips else 0, 
+      "tripsDistanceToday": trips["distance"] if "distance" in trips else 0,
+      "tripsDurationToday": trips["duration"] if "duration" in trips else 0,
+      "tripsConsumedFuel": trips["consumedFuel"] if "consumedFuel" in trips else 0,
+      "tripsCo2Saving": trips["co2Saving"] if "co2Saving" in trips else 0,
     }
 
   def _get_user_id(self):
